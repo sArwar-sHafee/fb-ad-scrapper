@@ -2,7 +2,7 @@ name: Nightly Facebook Page Scrape
 
 on:
   schedule:
-    - cron: '0 16 * * *' # Runs every night at 10 PM UTC
+    - cron: '*/5 * * * *' # Runs every night at 10 PM UTC
   workflow_dispatch: # Allows manual triggering
 
 jobs:

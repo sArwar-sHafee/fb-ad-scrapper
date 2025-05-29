@@ -8,8 +8,9 @@ CATEGORIES = ["cloths", "dress", "tshirt", "plastic"]
 # Base URL for Facebook Ad Library
 BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
 
-# List to store unique Facebook page URLs
-unique_page_urls = set()
+# List to store unique (category, Facebook page URL) tuples
+# Using a set of tuples to automatically handle uniqueness of (category, URL) pairs
+unique_category_url_pairs = set()
 
 # Function to fetch and parse HTML content
 def fetch_and_parse(url):
@@ -33,7 +34,6 @@ for category in CATEGORIES:
     if soup:
         # Find all anchor tags with the specified classes
         # The selector finds <a> tags that have all the specified classes.
-        # Note: Class order doesn't matter in CSS selectors.
         target_classes = "xt0psk2 x1hl2dhg xt0b8zv x8t9es0 x1fvot60 xxio538 xjnfcd9 xq9mrsl x1yc453h x1h4wwuj x1fcty0u"
         # Constructing the selector string by joining class names with dots
         css_selector = "a." + ".".join(target_classes.split())
@@ -46,21 +46,23 @@ for category in CATEGORIES:
         for tag in anchor_tags:
             href = tag.get("href")
             if href:
-                unique_page_urls.add(href)
+                # Add the (category, URL) pair to the set
+                unique_category_url_pairs.add((category, href))
 
-# Save the unique URLs to a CSV file
+# Save the unique (category, URL) pairs to a CSV file
 csv_file_path = "facebook_pages.csv"
-print(f"\nSaving unique URLs to {csv_file_path}...")
+print(f"\nSaving unique (category, URL) pairs to {csv_file_path}...")
 
 try:
     with open(csv_file_path, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         # Write the header row
-        writer.writerow(["Page URL"])
-        # Write the unique URLs
-        for page_url in unique_page_urls:
-            writer.writerow([page_url])
-    print(f"Successfully saved {len(unique_page_urls)} unique URLs to {csv_file_path}")
+        writer.writerow(["Category", "Page URL"])
+        # Write the unique (category, URL) pairs
+        # Sort for consistent output, though not strictly required by prompt
+        for cat, page_url in sorted(list(unique_category_url_pairs)): 
+            writer.writerow([cat, page_url])
+    print(f"Successfully saved {len(unique_category_url_pairs)} unique (category, URL) pairs to {csv_file_path}")
 except IOError as e:
     print(f"Error writing to CSV file {csv_file_path}: {e}")
 
@@ -68,3 +70,4 @@ print("\nScript finished.")
 # Acknowledgment of potential scraping prevention mechanisms
 print("\nNote: Facebook may have mechanisms to prevent or limit scraping (e.g., CAPTCHAs, IP blocking).")
 print("This script uses a direct scraping approach and its effectiveness may vary.")
+print("The core scraping logic has not been changed in this update; previous issues with finding URLs may persist.")
