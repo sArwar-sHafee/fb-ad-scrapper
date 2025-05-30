@@ -6,7 +6,7 @@ import os
 import datetime
 
 # Define the list of categories to search for
-CATEGORIES = ["cloths", "dress", "tshirt", "plastic"]
+CATEGORIES = ["cloths"]
 
 # Base URL for Facebook Ad Library
 BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
