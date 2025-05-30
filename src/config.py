@@ -6,10 +6,30 @@ import os
 import datetime
 
 # Define the list of categories to search for
+# CATEGORIES = [
+#     "cloth",
+#     "Fashion",
+#     "Gadget",
+#     "Electronics",
+#     "Organic",
+#     "Food",
+#     "Organic food",
+#     "Honey",
+#     "Ghee",
+#     "Fish",
+#     "Grocery",
+#     "Mango",
+#     "T shirt",
+#     "Tshirt",
+#     "Print",
+#     "Printing"
+# ]
+
 CATEGORIES = ["cloth"]
 
 # Base URL for Facebook Ad Library
-BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
+# BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
+BASE_URL = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
 
 # Output directory path
 OUTPUT_DIR = "contents"
@@ -29,9 +49,9 @@ BROWSER_SETTINGS = {
 
 # Scraper settings
 SCRAPER_SETTINGS = {
-    "max_scroll_attempts": 100,
+    "max_scroll_attempts": 10,
     "scroll_delay": 5,
-    "page_load_timeout": 3000,
+    "page_load_timeout": 600,
     "max_retries": 3,
     "retry_delay": 5,
     "category_delay": 5

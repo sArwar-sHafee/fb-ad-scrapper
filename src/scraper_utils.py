@@ -31,9 +31,31 @@ def extract_urls_from_page(driver, category, unique_category_url_pairs):
         print(f"Timeout waiting for page to load for category '{category}'")
         return
     
-    # Scroll down a few times to load more content
-    for i in range(SCRAPER_SETTINGS["max_scroll_attempts"]):
-        print(f"Scroll attempt {i+1}/{SCRAPER_SETTINGS['max_scroll_attempts']}")
+    # Get the number of results from the heading element
+    scroll_attempts = SCRAPER_SETTINGS["max_scroll_attempts"]  # Default value
+    try:
+        # Wait for the results heading to appear
+        results_element = WebDriverWait(driver, SCRAPER_SETTINGS["page_load_timeout"]).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@role='heading' and contains(text(), 'results')]"))
+        )
+        results_text = results_element.text  # e.g., "~43,000 results"
+        
+        # Extract the number from the text
+        match = re.search(r'~?(\d+(?:,\d+)*)', results_text)
+        if match:
+            # Remove commas and convert to integer
+            results_count = int(match.group(1).replace(',', ''))
+            # Calculate scroll attempts (results / 100)
+            calculated_attempts = results_count // 100
+            # Use the calculated value, but not less than max_scroll_attempts
+            scroll_attempts = max(calculated_attempts, SCRAPER_SETTINGS["max_scroll_attempts"])
+            print(f"Found {results_count} results, setting scroll attempts to {scroll_attempts}")
+    except Exception as e:
+        print(f"Could not extract results count: {e}. Using default scroll attempts.")
+    
+    # Scroll down to load more content
+    for i in range(scroll_attempts):
+        print(f"Scroll attempt {i+1}/{scroll_attempts}")
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(SCRAPER_SETTINGS["scroll_delay"])  # Wait for content to load
     
