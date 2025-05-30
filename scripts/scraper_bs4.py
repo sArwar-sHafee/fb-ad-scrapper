@@ -67,7 +67,3 @@ except IOError as e:
     print(f"Error writing to CSV file {csv_file_path}: {e}")
 
 print("\nScript finished.")
-# Acknowledgment of potential scraping prevention mechanisms
-print("\nNote: Facebook may have mechanisms to prevent or limit scraping (e.g., CAPTCHAs, IP blocking).")
-print("This script uses a direct scraping approach and its effectiveness may vary.")
-print("The core scraping logic has not been changed in this update; previous issues with finding URLs may persist.")

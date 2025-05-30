@@ -34,8 +34,8 @@ else
 fi
 
 # Execute the Python scraper script
-echo "Executing Python scraper script (scraper.py)..."
-$PYTHON_CMD scraper.py
+echo "Executing Python scraper script (main.py)..."
+$PYTHON_CMD main.py
 if [ $? -ne 0 ]; then
     echo "Error: Python scraper script failed to execute."
     # Note: The Python script itself has internal error handling and messages.
