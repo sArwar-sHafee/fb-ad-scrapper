@@ -17,7 +17,7 @@ OUTPUT_DIR = "contents"
 # Function to generate output file path with current date
 def get_output_file():
     """Generate output file path with current date as filename."""
-    today = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M")
+    today = datetime.datetime.now().astimezone(datetime.timezone(datetime.timedelta(hours=6))).strftime("%d-%m-%Y_%H:%M")
     return os.path.join(OUTPUT_DIR, f"ad_{today}.csv")
 
 # Browser settings
