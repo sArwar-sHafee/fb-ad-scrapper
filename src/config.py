@@ -29,9 +29,9 @@ BROWSER_SETTINGS = {
 
 # Scraper settings
 SCRAPER_SETTINGS = {
-    "max_scroll_attempts": 5,
-    "scroll_delay": 3,
-    "page_load_timeout": 30,
+    "max_scroll_attempts": 20,
+    "scroll_delay": 5,
+    "page_load_timeout": 300,
     "max_retries": 3,
     "retry_delay": 5,
     "category_delay": 5
