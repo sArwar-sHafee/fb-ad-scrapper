@@ -18,7 +18,7 @@ OUTPUT_DIR = "contents"
 def get_output_file():
     """Generate output file path with current date as filename."""
     today = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M")
-    return os.path.join(OUTPUT_DIR, f"facebook_pages_{today}.csv")
+    return os.path.join(OUTPUT_DIR, f"ad_{today}.csv")
 
 # Browser settings
 BROWSER_SETTINGS = {
