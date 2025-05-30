@@ -51,7 +51,7 @@ BROWSER_SETTINGS = {
 SCRAPER_SETTINGS = {
     "max_scroll_attempts": 10,
     "scroll_delay": 5,
-    "page_load_timeout": 600,
+    "page_load_timeout": 3600,
     "max_retries": 3,
     "retry_delay": 5,
     "category_delay": 5
