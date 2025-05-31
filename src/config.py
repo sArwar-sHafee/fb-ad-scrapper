@@ -53,6 +53,7 @@ SCRAPER_SETTINGS = {
     "scroll_delay": 5,
     "page_load_timeout": 7200,
     "script_timeout": 7200,
+    "http_timeout": 7200,  # Timeout for HTTP connections to WebDriver
     "max_retries": 1,
     "retry_delay": 5,
     "category_delay": 5

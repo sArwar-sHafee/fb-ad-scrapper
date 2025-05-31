@@ -4,6 +4,7 @@ Browser setup and management for the Facebook Ad Scraper.
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from src.config import BROWSER_SETTINGS, SCRAPER_SETTINGS
 
 def setup_driver():
@@ -29,7 +30,10 @@ def setup_driver():
     # Add a realistic user agent
     chrome_options.add_argument(f"--user-agent={BROWSER_SETTINGS['user_agent']}")
     
-    driver = webdriver.Chrome(options=chrome_options)
+    # Create a service object with increased timeout
+    chrome_service = Service(timeout=SCRAPER_SETTINGS["http_timeout"])
+    
+    driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
     
     # Set timeouts from SCRAPER_SETTINGS
     driver.set_script_timeout(SCRAPER_SETTINGS["script_timeout"])
