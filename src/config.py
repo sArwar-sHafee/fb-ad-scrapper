@@ -52,6 +52,7 @@ SCRAPER_SETTINGS = {
     "max_scroll_attempts": 100,
     "scroll_delay": 5,
     "page_load_timeout": 7200,
+    "script_timeout": 7200,
     "max_retries": 1,
     "retry_delay": 5,
     "category_delay": 5
