@@ -28,8 +28,8 @@ import datetime
 CATEGORIES = ["cloth"]
 
 # Base URL for Facebook Ad Library
-BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
-# BASE_URL = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
+# BASE_URL = "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
+BASE_URL = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&is_targeted_country=false&media_type=all&q={CATEGORY}&search_type=keyword_unordered"
 
 # Output directory path
 OUTPUT_DIR = "contents"
