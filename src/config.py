@@ -51,9 +51,9 @@ BROWSER_SETTINGS = {
 SCRAPER_SETTINGS = {
     "max_scroll_attempts": 100,
     "scroll_delay": 5,
-    "page_load_timeout": 7200,
-    "script_timeout": 7200,
-    "http_timeout": 7200,  # Timeout for HTTP connections to WebDriver
+    "page_load_timeout": 21600,
+    "script_timeout": 21600,
+    "http_timeout": 21600,  # Timeout for HTTP connections to WebDriver
     "max_retries": 1,
     "retry_delay": 5,
     "category_delay": 5

@@ -11,7 +11,7 @@ on:
 jobs:
   run_scraper:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 2 hour timeout
+    timeout-minutes: 360  # 6 hour timeout
     permissions:
       contents: write  # Required to push commits
 
