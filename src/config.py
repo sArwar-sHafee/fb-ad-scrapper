@@ -6,24 +6,24 @@ import os
 import datetime
 
 # Define the list of categories to search for
-CATEGORIES = [
-    "cloth",
-    "Fashion",
-    "Gadget",
-    "Electronics",
-    "Organic",
-    "Food",
-    "Organic food",
-    "Honey",
-    "Ghee",
-    "Fish",
-    "Grocery",
-    "Mango",
-    "T shirt",
-    "Tshirt",
-    "Print",
-    "Printing"
- ]
+# CATEGORIES = [
+#     "cloth",
+#     "Fashion",
+#     "Gadget",
+#     "Electronics",
+#     "Organic",
+#     "Food",
+#     "Organic food",
+#     "Honey",
+#     "Ghee",
+#     "Fish",
+#     "Grocery",
+#     "Mango",
+#     "T shirt",
+#     "Tshirt",
+#     "Print",
+#     "Printing"
+#  ]
 
 # CATEGORIES = ["cloth"]
 
@@ -49,9 +49,9 @@ BROWSER_SETTINGS = {
 
 # Scraper settings
 SCRAPER_SETTINGS = {
-    "max_scroll_attempts": 10,
+    "max_scroll_attempts": 100,
     "scroll_delay": 5,
-    "page_load_timeout": 3600,
+    "page_load_timeout": 7200,
     "max_retries": 3,
     "retry_delay": 5,
     "category_delay": 5
