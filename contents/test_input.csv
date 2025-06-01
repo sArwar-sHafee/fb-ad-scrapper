@@ -1,0 +1,5 @@
+Category,URL,OtherColumn
+Tech,http://example.com/tech,Data1
+Retail,http://example.com/retail,Data2
+,http://example.com/nocat,Data3
+Food,http://example.com/food,Data4
