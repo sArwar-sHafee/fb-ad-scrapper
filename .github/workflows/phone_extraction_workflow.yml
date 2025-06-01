@@ -1,0 +1,144 @@
+name: Manual Phone Extractor
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for running the phone extractor'
+        required: false
+        default: 'Manual trigger'
+
+jobs:
+  run_phone_extractor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # 1 hour timeout, adjust if needed
+
+    permissions:
+      contents: write # Required to push commits
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # Consistent with the other workflow
+
+      - name: Install system dependencies for Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip # For chromedriver
+          sudo apt-get install -y google-chrome-stable # Or chromium-browser
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download and install ChromeDriver
+        run: |
+          CHROME_VERSION_FULL=$(google-chrome --product-version)
+          echo "Detected Chrome version: $CHROME_VERSION_FULL"
+          # For Chrome 115+, the ChromeDriver versioning changed.
+          # The old chromedriver.storage.googleapis.com LATEST_RELEASE files are no longer updated for 115+.
+          # We need to use the new JSON endpoints for Chrome for Testing (CfT).
+          # This script attempts to get the correct ChromeDriver for versions 115+
+
+          CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION_FULL | cut -d. -f1)
+
+          if [ "$CHROME_MAJOR_VERSION" -ge 115 ]; then
+            echo "Chrome version is 115 or newer. Using Chrome for Testing (CfT) JSON endpoints."
+            # Construct the URL for the known good versions per milestone endpoint
+            CFT_JSON_URL="https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json"
+
+            # Fetch the JSON, then use jq to find the ChromeDriver URL for linux64 for the current Chrome version (full version string)
+            # This requires jq to be installed. Let's add it.
+            sudo apt-get install -y jq
+
+            # Try to find exact match first, then fallback to major version if exact not found
+            CHROMEDRIVER_URL=$(curl -s $CFT_JSON_URL | jq -r --arg version "$CHROME_VERSION_FULL" '.versions[] | select(.version==$version) | .downloads.chromedriver[] | select(.platform=="linux64") | .url' 2>/dev/null)
+
+            if [ -z "$CHROMEDRIVER_URL" ]; then
+                echo "No exact match for ChromeDriver $CHROME_VERSION_FULL. Trying latest for major version $CHROME_MAJOR_VERSION."
+                # Fallback: Get the latest available ChromeDriver for the major Chrome version.
+                # This gets the last entry for the major version, which should be the most recent patch/build.
+                CHROMEDRIVER_URL=$(curl -s $CFT_JSON_URL | jq -r --arg major_version "$CHROME_MAJOR_VERSION" '[.versions[] | select(.version | startswith($major_version + ".")) | .downloads.chromedriver[] | select(.platform=="linux64") | .url] | last' 2>/dev/null)
+            fi
+
+            if [ -z "$CHROMEDRIVER_URL" ]; then
+                echo "Error: Could not determine ChromeDriver download URL for Chrome $CHROME_VERSION_FULL using CfT endpoints."
+                # As a last resort, try the old method for the MAJOR version, though it's unlikely to work for 115+
+                echo "Attempting fallback to older LATEST_RELEASE URL for major version (likely to fail for Chrome 115+)."
+                LATEST_CHROMEDRIVER_VERSION_URL="https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_MAJOR_VERSION}"
+                CHROMEDRIVER_VERSION=$(wget -q -O - $LATEST_CHROMEDRIVER_VERSION_URL)
+                if [ -z "$CHROMEDRIVER_VERSION" ]; then
+                    echo "Error: Fallback LATEST_RELEASE also failed for $CHROME_MAJOR_VERSION."
+                    exit 1
+                fi
+                CHROMEDRIVER_URL="https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+            fi
+          else
+            echo "Chrome version is older than 115. Using chromedriver.storage.googleapis.com."
+            LATEST_CHROMEDRIVER_VERSION_URL="https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_MAJOR_VERSION}"
+            CHROMEDRIVER_VERSION=$(wget -q -O - $LATEST_CHROMEDRIVER_VERSION_URL)
+            if [ -z "$CHROMEDRIVER_VERSION" ]; then
+                echo "Error: Could not determine ChromeDriver version for Chrome $CHROME_MAJOR_VERSION."
+                exit 1
+            fi
+            CHROMEDRIVER_URL="https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+          fi
+
+          echo "Attempting to download ChromeDriver from: $CHROMEDRIVER_URL"
+          wget -N $CHROMEDRIVER_URL -P ~/
+          unzip ~/chromedriver_linux64.zip -d ~/
+          # Some chromedriver zips might contain a directory like "chromedriver-linux64"
+          # Check if chromedriver is directly in ~ or in a subdirectory
+          if [ -f ~/chromedriver ]; then
+            sudo mv -f ~/chromedriver /usr/local/bin/chromedriver
+          elif [ -f ~/chromedriver-linux64/chromedriver ]; then
+            sudo mv -f ~/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+            rm -rf ~/chromedriver-linux64 # Clean up directory
+          else
+            echo "Error: chromedriver not found in expected location after unzipping."
+            ls -la ~/ # List contents for debugging
+            exit 1
+          fi
+          rm ~/chromedriver_linux64.zip
+          sudo chmod +x /usr/local/bin/chromedriver
+          echo "ChromeDriver installed to /usr/local/bin/chromedriver"
+          chromedriver --version
+
+      - name: Run Phone Extractor script
+        run: python phone_extractor.py
+
+      - name: Commit and push new phone numbers
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+
+          # Check if there are any new or modified files in the phone_numbers directory
+          # This directory is where save_phone_numbers_to_csv is expected to save files.
+          if [ -d "phone_numbers" ] && [ -n "$(ls -A phone_numbers/)" ]; then
+            if [[ -n $(git status --porcelain phone_numbers/) ]]; then
+              echo "New phone numbers found. Committing..."
+              # Add new/modified files in the phone_numbers directory
+              git add phone_numbers/
+
+              # Get today's date for the commit message
+              TODAY=$(date +"%Y-%m-%d %H:%M:%S")
+
+              # Commit with a descriptive message including the date
+              git commit -m "Add extracted phone numbers at $TODAY"
+
+              # Push changes to the repository
+              # Specify the current branch when pushing
+              CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+              git push origin $CURRENT_BRANCH
+
+              echo "Successfully committed and pushed new phone numbers to branch $CURRENT_BRANCH."
+            else
+              echo "No changes in phone_numbers/ to commit."
+            fi
+          else
+            echo "No phone_numbers directory found or it's empty. No data to commit."
+          fi
+```

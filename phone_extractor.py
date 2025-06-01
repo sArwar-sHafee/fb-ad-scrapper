@@ -1,12 +1,13 @@
 import csv
 import os
-import collections # Moved import collections to the top
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 from src.data_handler import save_phone_numbers_to_csv # Added import
 
@@ -48,85 +49,91 @@ def read_input_csv(file_path):
     return results
 
 if __name__ == '__main__':
-    # The dummy CSV 'contents/test_input.csv' should have been created in a previous step.
-    # If not, this test block might fail or act on an empty/non-existent file.
-    # For robust testing, especially in isolated environments, it's good practice
-    # to ensure the test file is created here if it doesn't exist.
+    input_csv_path = "contents/test_input.csv"
+    # Output path is managed by save_phone_numbers_to_csv in data_handler.py
+    # For clarity, we can define it here but it's not directly passed to the save function
+    # if we stick to the current save_phone_numbers_to_csv implementation.
+    # output_csv_path = "contents/extracted_phones.csv" # This was the original plan
+    # However, save_phone_numbers_to_csv in data_handler.py creates timestamped files in "phone_numbers/"
 
-    dummy_csv_dir = "contents"
-    dummy_csv_path = os.path.join(dummy_csv_dir, "test_input.csv")
+    print(f"Starting phone extraction process...")
+    print(f"Reading input from: {input_csv_path}")
 
-    # Ensure the directory exists (create_file_with_block in previous step should handle this)
-    # os.makedirs(dummy_csv_dir, exist_ok=True) # Not strictly needed if previous tool call succeeded
+    # Check if input file exists
+    if not os.path.exists(input_csv_path):
+        print(f"Error: Input CSV file not found at {input_csv_path}")
+        print("Please ensure the input file exists. For example, it might be created by a previous step or manually.")
+        # Example content for contents/test_input.csv if needed for a quick test:
+        # print("Example content for 'contents/test_input.csv':")
+        # print("Category,URL")
+        # print("Tech,https://www.example.com/tech_page_with_phone")
+        # print("Retail,https://www.example.com/retail_page_with_phone")
+        exit(1) # Exit if input file is crucial and missing
 
-    # The content for the dummy CSV file (matches what was intended for create_file_with_block)
-    dummy_csv_content = """Category,URL,OtherColumn
-Tech,http://example.com/tech,Data1
-Retail,http://example.com/retail,Data2
-,http://example.com/nocat,Data3
-Food,http://example.com/food,Data4
-"""
-    # Verify the file was created (or create it if it's missing for some reason in a test setup)
-    # This is more of a safeguard for standalone script execution.
-    # In this multi-turn agent flow, the previous step explicitly created it.
-    if not os.path.exists(dummy_csv_path):
-        print(f"Test file {dummy_csv_path} not found. Attempting to create it for the test.")
-        try:
-            os.makedirs(dummy_csv_dir, exist_ok=True)
-            with open(dummy_csv_path, 'w', newline='', encoding='utf-8') as f:
-                f.write(dummy_csv_content)
-            print(f"Test file {dummy_csv_path} created.")
-        except Exception as e:
-            print(f"Failed to create test file {dummy_csv_path}: {e}")
-            # Exit if test file can't be created, as test will fail.
-            exit(1)
+    url_data = read_input_csv(input_csv_path)
 
-    print(f"Attempting to read: {dummy_csv_path}")
-    extracted_data = read_input_csv(dummy_csv_path)
+    if not url_data:
+        print("No data read from input CSV or an error occurred. Exiting.")
+        exit(1)
 
-    print("\nExtracted data:")
-    if extracted_data:
-        for item in extracted_data:
-            print(item)
+    print(f"Successfully read {len(url_data)} URLs from {input_csv_path}.")
+
+    # Initialize Selenium WebDriver
+    print("Initializing Selenium WebDriver (Chrome headless)...")
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    # The webdriver executable should be in PATH or specify executable_path
+    # For GitHub Actions, chromedriver is often pre-installed and in PATH
+    try:
+        driver = webdriver.Chrome(options=options)
+        print("WebDriver initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing WebDriver: {e}")
+        print("Ensure Chrome and ChromeDriver are correctly installed and configured.")
+        exit(1)
+
+    all_results = []
+
+    print(f"Processing {len(url_data)} items...")
+    for item in url_data:
+        url = item.get('url')
+        category = item.get('category')
+
+        if not url:
+            print(f"Skipping item with missing URL: {item}")
+            continue
+
+        print(f"Extracting phone from URL: {url} (Category: {category})")
+        phone_number = extract_phone_from_url(driver, url)
+
+        result = {'url': url, 'category': category, 'phone_number': phone_number}
+        all_results.append(result)
+        if phone_number:
+            print(f"Found phone: {phone_number} for {url}")
+        else:
+            print(f"No phone found for {url}")
+
+    # Quit WebDriver
+    print("Closing WebDriver...")
+    driver.quit()
+
+    # Save results
+    # The save_phone_numbers_to_csv function from data_handler.py creates its own filename
+    # and saves it in the 'phone_numbers' directory.
+    # It also uses headers: "Category", "URL", "Phone Number"
+    print(f"Saving {len(all_results)} results...")
+    if all_results:
+        save_successful = save_phone_numbers_to_csv(all_results) # No output_csv_path needed as argument
+        if save_successful:
+            print(f"Results saved successfully by save_phone_numbers_to_csv (check 'phone_numbers' directory).")
+        else:
+            print(f"Failed to save results using save_phone_numbers_to_csv.")
     else:
-        print("No data extracted or an error occurred.")
+        print("No results to save.")
 
-    # Example of expected output for verification (optional, but good for testing)
-    expected_data = [
-        {'url': 'http://example.com/tech', 'category': 'Tech'},
-        {'url': 'http://example.com/retail', 'category': 'Retail'},
-        {'url': 'http://example.com/nocat', 'category': ''}, # Category is empty string
-        {'url': 'http://example.com/food', 'category': 'Food'}
-    ]
-
-    # Basic assertion for the test
-    # Note: Comparing lists of dicts can be tricky if order is not guaranteed.
-    # For this specific implementation, order is preserved.
-    if collections.Counter(map(tuple, map(sorted, map(dict.items, extracted_data)))) == \
-       collections.Counter(map(tuple, map(sorted, map(dict.items, expected_data)))):
-        print("\nTest passed: Extracted data matches expected data.")
-    else:
-        print("\nTest failed: Extracted data does not match expected data.")
-        print(f"Expected: {expected_data}")
-        print(f"Got: {extracted_data}")
-
-    # Test with a non-existent file
-    print("\nTesting with a non-existent file:")
-    non_existent_data = read_input_csv("non_existent_file.csv")
-    if not non_existent_data:
-        print("Correctly returned empty list for non-existent file.")
-    else:
-        print(f"Test failed: Expected empty list, got {non_existent_data}")
-
-    # Cleanup: Remove the dummy CSV file and directory if desired
-    # try:
-    #     os.remove(dummy_csv_path)
-    #     os.rmdir(dummy_csv_dir) # rmdir only removes empty directories
-    #     print(f"\nCleaned up {dummy_csv_path} and {dummy_csv_dir}")
-    # except OSError as e:
-    #     print(f"\nError during cleanup: {e}")
-    #     print("(This is normal if other files are in 'contents' or dir doesn't exist)")
-
+    print("Phone extraction process completed.")
 
 def extract_phone_from_url(driver, url):
     """
