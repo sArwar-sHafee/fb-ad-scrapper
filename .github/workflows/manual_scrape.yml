@@ -52,4 +52,4 @@ jobs:
             echo "Successfully committed and pushed new data"
           else
             echo "No new data to commit"
-          
+          fi
